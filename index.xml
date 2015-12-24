@@ -2,19 +2,19 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Const Volatile</title>
-    <link>http://cmbrandenburg.github.io/</link>
+    <link>https://cmbrandenburg.github.io/</link>
     <description>Recent content on Const Volatile</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Thu, 24 Dec 2015 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://cmbrandenburg.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://cmbrandenburg.github.io/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Hibernating in Debian using a temporary swap file</title>
-      <link>http://cmbrandenburg.github.io/post/2015-12-24-hibernating_in_debian_using_a_temporary_swap_file/</link>
+      <link>https://cmbrandenburg.github.io/post/2015-12-24-hibernating_in_debian_using_a_temporary_swap_file/</link>
       <pubDate>Thu, 24 Dec 2015 00:00:00 +0000</pubDate>
       
-      <guid>http://cmbrandenburg.github.io/post/2015-12-24-hibernating_in_debian_using_a_temporary_swap_file/</guid>
+      <guid>https://cmbrandenburg.github.io/post/2015-12-24-hibernating_in_debian_using_a_temporary_swap_file/</guid>
       <description>
 
 &lt;p&gt;This article explains how to configure a Debian Jessie system to
