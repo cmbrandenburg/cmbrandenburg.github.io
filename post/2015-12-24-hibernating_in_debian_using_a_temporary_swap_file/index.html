@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>Hibernating in Debian using a temporary swap file</title>
+  <link rel="stylesheet" type="text/css" href="http://cmbrandenburg.github.iocss/simplicitism.css" />
+ </head>
+ <body>
+  <h1 class="simplicitism-title">Hibernating in Debian using a temporary swap file</h1>
+
+  <em>Thursday, Dec 24, 2015</em>
+
+  
+
+<p>This article explains how to configure a Debian Jessie system to
+hibernate using swap space that&rsquo;s created just before suspending and
+destroyed just after resuming. This trick allows hibernation on a
+swap-free or swap-lite system—useful on a desktop system running with
+enough RAM to make swap space otherwise unnecessary.</p>
+
+<h1 id="how-to-make-it-work:b629a1729d7f2b6331bf76a5082b2687">How to make it work</h1>
+
+<h2 id="determine-the-root-partition-of-your-system:b629a1729d7f2b6331bf76a5082b2687">Determine the root partition of your system</h2>
+
+<pre><code>$ rootdev=$(mount | grep ' / ' | awk '{ print $1 }')
+</code></pre>
+
+<p><em>Important!</em> Make sure you get this right. Otherwise your system may
+fail to suspend or—much worse—fail to resume.</p>
+
+<pre><code>$ echo $rootdev
+/dev/sda1
+</code></pre>
+
+<p>The second line (e.g., <code>/dev/sda1</code>) should be your system&rsquo;s root
+partition.</p>
+
+<h2 id="install-and-configure-uswsusp:b629a1729d7f2b6331bf76a5082b2687">Install and configure <code>uswsusp</code></h2>
+
+<pre><code>$ sudo apt-get install uswsusp &amp;&amp;
+  sudo sh -c &quot;cat &lt;&lt;EOF &gt;/etc/uswsusp.conf
+resume device = $rootdev
+compress = y
+early writeout = y
+shutdown method = platform
+image size = 0
+resume offset = 0
+EOF&quot;
+</code></pre>
+
+<p>Hibernating using a swap file—as opposed to a swap partition—requires
+special support. We&rsquo;ll use <code>uswsusp</code>.</p>
+
+<p>The <code>/etc/uswsusp.conf</code> is the configuration file for <code>uswsusp</code>. The
+<code>image size</code> and <code>resume offset</code> lines are placeholders that we&rsquo;ll
+overwrite each time before suspending.</p>
+
+<p><em>Note.</em> It&rsquo;s also possible to hibernate to a swap file using <code>systemd</code>,
+but my only experience doing this is with Arch Linux, and, as far as I
+know, the swap file must exist upon boot-up, thus preventing the swap
+file from being created on demand.</p>
+
+<h2 id="update-grub-to-add-the-resume-kernel-parameter:b629a1729d7f2b6331bf76a5082b2687">Update Grub to add the <code>resume</code> kernel parameter</h2>
+
+<pre><code>$ { grep -q '\&lt;GRUB_CMDLINE_LINUX_DEFAULT=.*resume=' /etc/default/grub &amp;&amp;
+      (echo 'Warning: The `resume` parameter is already set.' &gt;&amp;2 || true) } ||
+    { sudo sed --in-place \
+        -e &quot;s#^\\(GRUB_CMDLINE_LINUX_DEFAULT=\&quot;\\)#\\1resume=$rootdev #&quot; \
+        /etc/default/grub &amp;&amp;
+      sudo update-grub; }
+</code></pre>
+
+<p>The <code>resume</code> kernel is necessary to resume from a swap file.
+Otherwise the kernel will not find the swap file, and the system will
+boot normally—as though rebooting.</p>
+
+<p>If the <code>resume</code> parameter is already set, you&rsquo;ll need to take
+intelligent action to resolve.</p>
+
+<h2 id="install-the-dynamic-hibernate-script:b629a1729d7f2b6331bf76a5082b2687">Install the <code>dynamic-hibernate</code> script</h2>
+
+<pre><code>$ sudo wget -O /usr/local/sbin/dynamic-hibernate \
+    https://raw.githubusercontent.com/cmbrandenburg/pcconf/e7dbe6128a9267b1f55fed27b22fcbfdc1734b3e/bin/dynamic-hibernate &amp;&amp;
+  sudo chmod +x /usr/local/sbin/dynamic-hibernate
+</code></pre>
+
+<p>The <code>dynamic-hibernate</code> script does the actual hibernation. It:</p>
+
+<ol>
+<li>Sets up a temporary swap file,</li>
+<li>Updates the <code>/etc/uswsusp.conf</code> with the location of the new swap
+file,</li>
+<li>Re-creates the system&rsquo;s initial RAM disk,</li>
+<li>Suspends the system, and</li>
+<li>Deletes the swap file after resuming.</li>
+</ol>
+
+<p>By default, the script requests the kernel to store the smallest image
+possible when suspending, presumably by discarding disk buffers and
+disk-backed pages that may be safely reloaded after resuming. In my
+experience, smaller images yield faster resume speeds when using a
+spinning disk, and SSDs are fast enough to make any difference
+negligible. Nevertheless, if you want to change this behavior then
+modify the <code>image size</code> value in the script.</p>
+
+<h2 id="give-yourself-sudo-permission-to-hibernate-optional:b629a1729d7f2b6331bf76a5082b2687">Give yourself <code>sudo</code> permission to hibernate (optional)</h2>
+
+<pre><code>$ sudo sed --in-place \
+  -e &quot;\$a$USER ALL = NOPASSWD: /usr/local/sbin/dynamic-hibernate&quot; \
+  /etc/sudoers
+</code></pre>
+
+<p>This gives permission to your current user account to run the
+<code>dynamic-hibernate</code> script without entering a password.</p>
+
+<h2 id="create-a-script-to-lock-the-screen-and-hibernate-optional:b629a1729d7f2b6331bf76a5082b2687">Create a script to lock the screen and hibernate (optional)</h2>
+
+<pre><code>$ mkdir -p ~/bin &amp;&amp;
+  touch ~/bin/hibernate &amp;&amp;
+  chmod +x ~/bin/hibernate &amp;&amp;
+  cat &lt;&lt;EOF &gt;~/bin/hibernate
+#!/bin/sh
+gnome-screensaver-command --lock
+sudo /usr/local/sbin/dynamic-hibernate
+EOF
+</code></pre>
+
+<p>Locking the screen requires the user to enter a password after resuming.
+Without locking the screen, anyone who resumes your computer during
+hibernation will gain access to your system.</p>
+
+<p>The above script works only if you&rsquo;re using the Gnome screensaver. If
+you&rsquo;re using a different screensaver then you must change the
+<code>~/bin/hibernate</code> script appropriately.</p>
+
+<h2 id="verify-everything-works:b629a1729d7f2b6331bf76a5082b2687">Verify everything works</h2>
+
+<pre><code>$ ~/bin/hibernate
+</code></pre>
+
+<p>Or:</p>
+
+<pre><code>$ sudo /usr/local/sbin/dynamic-hibernate
+</code></pre>
+
+<p>Your system will take a few moments to save state before powering off.
+Power the system back on, and the system should restore its state as it
+was before suspending.</p>
+
+<h1 id="additional-considerations:b629a1729d7f2b6331bf76a5082b2687">Additional considerations</h1>
+
+<p>Once you get hibernation working, it should continue to work reliably.
+However, here are some further considerations.</p>
+
+<ul>
+<li><p>Don&rsquo;t hibernate after upgrading the kernel. Reboot first. Otherwise
+the kernel you resume with will be a different kernel than what you
+suspended with, and the mismatch will cause mayhem.</p></li>
+
+<li><p>If your system fails to suspend then there&rsquo;s a good chance the
+hibernation script will print a useful error message.</p></li>
+
+<li><p>If your system fails to suspend or resume then you may need to
+manually delete the swap file that gets left behind
+(<code>/swap.hibernate</code>).</p></li>
+
+<li><p>If your system fails to resume then your system will suffer the same
+consequences as though it crashed. This includes loss of application
+state, file corruption, etc.</p></li>
+</ul>
+
+<h1 id="references:b629a1729d7f2b6331bf76a5082b2687">References</h1>
+
+<ul>
+<li><a href="https://github.com/cmbrandenburg/pcconf#hibernation">https://github.com/cmbrandenburg/pcconf#hibernation</a>. These are the
+notes I use to set up a desktop system.</li>
+</ul>
+
+
+ </body>
+</html>

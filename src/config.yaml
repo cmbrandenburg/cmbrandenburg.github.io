@@ -1,0 +1,8 @@
+baseurl: "http://cmbrandenburg.github.io"
+languageCode: "en-us"
+title: "Const Volatile"
+theme: "simplicitism"
+
+taxonomies:
+  - category: "categories"
+  - tag: "tags"

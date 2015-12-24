@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>{{ .Title }}</title>
+  <link rel="stylesheet" type="text/css" href="{{ .Site.BaseURL }}css/simplicitism.css" />
+ </head>
+ <body>
+  <h1 class="simplicitism-title">{{ .Title }}</h1>
+
+  <em>{{ .Date.Format "Monday, Jan 2, 2006" }}</em>
+
+  {{ .Content }}
+
+ </body>
+</html>

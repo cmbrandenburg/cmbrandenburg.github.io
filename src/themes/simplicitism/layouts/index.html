@@ -1,0 +1,17 @@
+{{ partial "header.html" . }}
+
+Craig M. Brandenburg<br>
+<a href="mailto:c.m.brandenburg@gmail.com">c.m.brandenburg@gmail.com</a><br>
+<a href="https://github.com/cmbrandenburg">https://github.com/cmbrandenburg</a><br>
+
+<p><a href="{{ .Site.RSSLink }}">RSS</a></p>
+
+<h2>Posts</h2>
+
+<ul>
+ {{ range .Data.Pages }}
+ <li><a href="{{ .Permalink }}">{{ .Title }}</a> ({{ .Date.Format "2006-01-02" }})</li>
+ {{ end }}
+</ul>
+
+{{ partial "footer.html" . }}
