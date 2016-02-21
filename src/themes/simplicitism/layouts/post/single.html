@@ -5,11 +5,14 @@
   <link rel="stylesheet" type="text/css" href="{{ .Site.BaseURL }}css/simplicitism.css" />
  </head>
  <body>
-  <h1 class="simplicitism-title">{{ .Title }}</h1>
+  <h1>{{ .Title }}</h1>
 
   <em>{{ .Date.Format "Monday, Jan 2, 2006" }}</em>
 
   {{ .Content }}
 
+  <hr>
+  <p>Got feedback? Email me at <a
+   href="emailto:c.m.brandenburg@gmail.com">c.m.brandenburg@gmail.com</a>.</p>
  </body>
 </html>

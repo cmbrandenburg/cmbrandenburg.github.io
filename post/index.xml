@@ -23,9 +23,9 @@ destroyed just after resuming. This trick allows hibernation on a
 swap-free or swap-lite system—useful on a desktop system running with
 enough RAM to make swap space otherwise unnecessary.&lt;/p&gt;
 
-&lt;h1 id=&#34;how-to-make-it-work:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;How to make it work&lt;/h1&gt;
+&lt;h2 id=&#34;how-to-make-it-work:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;How to make it work&lt;/h2&gt;
 
-&lt;h2 id=&#34;determine-the-root-partition-of-your-system:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Determine the root partition of your system&lt;/h2&gt;
+&lt;h3 id=&#34;determine-the-root-partition-of-your-system:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Determine the root partition of your system&lt;/h3&gt;
 
 &lt;pre&gt;&lt;code&gt;$ rootdev=$(mount | grep &#39; / &#39; | awk &#39;{ print $1 }&#39;)
 &lt;/code&gt;&lt;/pre&gt;
@@ -40,7 +40,7 @@ fail to suspend or—much worse—fail to resume.&lt;/p&gt;
 &lt;p&gt;The second line (e.g., &lt;code&gt;/dev/sda1&lt;/code&gt;) should be your system&amp;rsquo;s root
 partition.&lt;/p&gt;
 
-&lt;h2 id=&#34;install-and-configure-uswsusp:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Install and configure &lt;code&gt;uswsusp&lt;/code&gt;&lt;/h2&gt;
+&lt;h3 id=&#34;install-and-configure-uswsusp:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Install and configure &lt;code&gt;uswsusp&lt;/code&gt;&lt;/h3&gt;
 
 &lt;pre&gt;&lt;code&gt;$ sudo apt-get install uswsusp &amp;amp;&amp;amp;
   sudo sh -c &amp;quot;cat &amp;lt;&amp;lt;EOF &amp;gt;/etc/uswsusp.conf
@@ -65,7 +65,7 @@ but my only experience doing this is with Arch Linux, and, as far as I
 know, the swap file must exist upon boot-up, thus preventing the swap
 file from being created on demand.&lt;/p&gt;
 
-&lt;h2 id=&#34;update-grub-to-add-the-resume-kernel-parameter:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Update Grub to add the &lt;code&gt;resume&lt;/code&gt; kernel parameter&lt;/h2&gt;
+&lt;h3 id=&#34;update-grub-to-add-the-resume-kernel-parameter:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Update Grub to add the &lt;code&gt;resume&lt;/code&gt; kernel parameter&lt;/h3&gt;
 
 &lt;pre&gt;&lt;code&gt;$ { grep -q &#39;\&amp;lt;GRUB_CMDLINE_LINUX_DEFAULT=.*resume=&#39; /etc/default/grub &amp;amp;&amp;amp;
       (echo &#39;Warning: The `resume` parameter is already set.&#39; &amp;gt;&amp;amp;2 || true) } ||
@@ -82,7 +82,7 @@ boot normally—as though rebooting.&lt;/p&gt;
 &lt;p&gt;If the &lt;code&gt;resume&lt;/code&gt; parameter is already set, you&amp;rsquo;ll need to take
 intelligent action to resolve.&lt;/p&gt;
 
-&lt;h2 id=&#34;install-the-dynamic-hibernate-script:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Install the &lt;code&gt;dynamic-hibernate&lt;/code&gt; script&lt;/h2&gt;
+&lt;h3 id=&#34;install-the-dynamic-hibernate-script:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Install the &lt;code&gt;dynamic-hibernate&lt;/code&gt; script&lt;/h3&gt;
 
 &lt;pre&gt;&lt;code&gt;$ sudo wget -O /usr/local/sbin/dynamic-hibernate \
     https://raw.githubusercontent.com/cmbrandenburg/pcconf/e7dbe6128a9267b1f55fed27b22fcbfdc1734b3e/bin/dynamic-hibernate &amp;amp;&amp;amp;
@@ -108,7 +108,7 @@ spinning disk, and SSDs are fast enough to make any difference
 negligible. Nevertheless, if you want to change this behavior then
 modify the &lt;code&gt;image size&lt;/code&gt; value in the script.&lt;/p&gt;
 
-&lt;h2 id=&#34;give-yourself-sudo-permission-to-hibernate-optional:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Give yourself &lt;code&gt;sudo&lt;/code&gt; permission to hibernate (optional)&lt;/h2&gt;
+&lt;h3 id=&#34;give-yourself-sudo-permission-to-hibernate-optional:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Give yourself &lt;code&gt;sudo&lt;/code&gt; permission to hibernate (optional)&lt;/h3&gt;
 
 &lt;pre&gt;&lt;code&gt;$ sudo sed --in-place \
   -e &amp;quot;\$a$USER ALL = NOPASSWD: /usr/local/sbin/dynamic-hibernate&amp;quot; \
@@ -118,7 +118,7 @@ modify the &lt;code&gt;image size&lt;/code&gt; value in the script.&lt;/p&gt;
 &lt;p&gt;This gives permission to your current user account to run the
 &lt;code&gt;dynamic-hibernate&lt;/code&gt; script without entering a password.&lt;/p&gt;
 
-&lt;h2 id=&#34;create-a-script-to-lock-the-screen-and-hibernate-optional:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Create a script to lock the screen and hibernate (optional)&lt;/h2&gt;
+&lt;h3 id=&#34;create-a-script-to-lock-the-screen-and-hibernate-optional:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Create a script to lock the screen and hibernate (optional)&lt;/h3&gt;
 
 &lt;pre&gt;&lt;code&gt;$ mkdir -p ~/bin &amp;amp;&amp;amp;
   touch ~/bin/hibernate &amp;amp;&amp;amp;
@@ -138,7 +138,7 @@ hibernation will gain access to your system.&lt;/p&gt;
 you&amp;rsquo;re using a different screensaver then you must change the
 &lt;code&gt;~/bin/hibernate&lt;/code&gt; script appropriately.&lt;/p&gt;
 
-&lt;h2 id=&#34;verify-everything-works:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Verify everything works&lt;/h2&gt;
+&lt;h3 id=&#34;verify-everything-works:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Verify everything works&lt;/h3&gt;
 
 &lt;pre&gt;&lt;code&gt;$ ~/bin/hibernate
 &lt;/code&gt;&lt;/pre&gt;
@@ -152,7 +152,7 @@ you&amp;rsquo;re using a different screensaver then you must change the
 Power the system back on, and the system should restore its state as it
 was before suspending.&lt;/p&gt;
 
-&lt;h1 id=&#34;additional-considerations:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Additional considerations&lt;/h1&gt;
+&lt;h2 id=&#34;additional-considerations:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;Additional considerations&lt;/h2&gt;
 
 &lt;p&gt;Once you get hibernation working, it should continue to work reliably.
 However, here are some further considerations.&lt;/p&gt;
@@ -174,7 +174,7 @@ consequences as though it crashed. This includes loss of application
 state, file corruption, etc.&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h1 id=&#34;references:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;References&lt;/h1&gt;
+&lt;h2 id=&#34;references:b629a1729d7f2b6331bf76a5082b2687&#34;&gt;References&lt;/h2&gt;
 
 &lt;ul&gt;
 &lt;li&gt;&lt;a href=&#34;https://github.com/cmbrandenburg/pcconf#hibernation&#34;&gt;https://github.com/cmbrandenburg/pcconf#hibernation&lt;/a&gt;. These are the

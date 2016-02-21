@@ -17,9 +17,9 @@ destroyed just after resuming. This trick allows hibernation on a
 swap-free or swap-lite system—useful on a desktop system running with
 enough RAM to make swap space otherwise unnecessary.
 
-# How to make it work
+## How to make it work
 
-## Determine the root partition of your system
+### Determine the root partition of your system
 
 ```
 $ rootdev=$(mount | grep ' / ' | awk '{ print $1 }')
@@ -36,7 +36,7 @@ $ echo $rootdev
 The second line (e.g., `/dev/sda1`) should be your system's root
 partition.
 
-## Install and configure `uswsusp`
+### Install and configure `uswsusp`
 
 ```
 $ sudo apt-get install uswsusp &&
@@ -62,7 +62,7 @@ but my only experience doing this is with Arch Linux, and, as far as I
 know, the swap file must exist upon boot-up, thus preventing the swap
 file from being created on demand.
 
-## Update Grub to add the `resume` kernel parameter
+### Update Grub to add the `resume` kernel parameter
 
 ```
 $ { grep -q '\<GRUB_CMDLINE_LINUX_DEFAULT=.*resume=' /etc/default/grub &&
@@ -80,7 +80,7 @@ boot normally—as though rebooting.
 If the `resume` parameter is already set, you'll need to take
 intelligent action to resolve.
 
-## Install the `dynamic-hibernate` script
+### Install the `dynamic-hibernate` script
 
 ```
 $ sudo wget -O /usr/local/sbin/dynamic-hibernate \
@@ -105,7 +105,7 @@ spinning disk, and SSDs are fast enough to make any difference
 negligible. Nevertheless, if you want to change this behavior then
 modify the `image size` value in the script.
 
-## Give yourself `sudo` permission to hibernate (optional)
+### Give yourself `sudo` permission to hibernate (optional)
 
 ```
 $ sudo sed --in-place \
@@ -116,7 +116,7 @@ $ sudo sed --in-place \
 This gives permission to your current user account to run the
 `dynamic-hibernate` script without entering a password.
 
-## Create a script to lock the screen and hibernate (optional)
+### Create a script to lock the screen and hibernate (optional)
 
 ```
 $ mkdir -p ~/bin &&
@@ -137,7 +137,7 @@ The above script works only if you're using the Gnome screensaver. If
 you're using a different screensaver then you must change the
 `~/bin/hibernate` script appropriately.
 
-## Verify everything works
+### Verify everything works
 
 ```
 $ ~/bin/hibernate
@@ -153,7 +153,7 @@ Your system will take a few moments to save state before powering off.
 Power the system back on, and the system should restore its state as it
 was before suspending.
 
-# Additional considerations
+## Additional considerations
 
 Once you get hibernation working, it should continue to work reliably.
 However, here are some further considerations.
@@ -173,7 +173,7 @@ However, here are some further considerations.
   consequences as though it crashed. This includes loss of application
   state, file corruption, etc.
 
-# References
+## References
 
 * https://github.com/cmbrandenburg/pcconf#hibernation. These are the
   notes I use to set up a desktop system.
