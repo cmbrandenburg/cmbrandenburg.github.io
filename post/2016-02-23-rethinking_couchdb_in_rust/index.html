@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>Rethinking CouchDB in Rust</title>
+  <link rel="stylesheet" type="text/css" href="https://cmbrandenburg.github.io/css/simplicitism.css" />
+ </head>
+ <body>
+  <h1>Rethinking CouchDB in Rust</h1>
+
+  <em>Tuesday, Feb 23, 2016</em>
+
+  <p>My knowledge of Rust has surpassed my knowledge of CouchDB. I now think
+less about <em>how</em> to abstract the CouchDB API and more about <em>what</em> to
+abstract. Additionally, I believe my original strategy for the <a href="https://github.com/couchdb-rs/couchdb">couchdb
+crate</a> is a bad idea.</p>
+
+<p>That strategy is to provide a thin abstraction whereby the application
+has fine-grained control over each HTTP request it sends to the CouchDB
+server. Here&rsquo;s an example request with one query parameter:</p>
+
+<pre><code class="language-rust">// GET /stuff/my_doc?rev=&lt;some_revision&gt;
+client.get_document(&quot;/stuff/my_doc&quot;)
+      .rev(&amp;some_revision)
+      .run();
+</code></pre>
+
+<p>There&rsquo;s not much abstraction here. The application explicitly sets the
+URI path and <code>rev</code> query parameter. This level of abstraction leads to
+two problems:</p>
+
+<ol>
+<li><p>The CouchDB API provides many ways of doing the same thing, so the
+library would also provide many ways of doing the same thing—i.e.,
+bloat.</p></li>
+
+<li><p>The library is less useful to most applications.</p></li>
+</ol>
+
+<p>Let&rsquo;s look at the first problem: <strong>bloat</strong>.</p>
+
+<p>Here are some examples how CouchDB has two ways of doing the same thing:</p>
+
+<ul>
+<li><p>Are you creating a document? You can PUT the document <em>or</em> POST it to
+the database.</p></li>
+
+<li><p>Are you deleting a document? You can specify its revision via the
+<code>If-Match</code> header <em>or</em> the <code>rev</code> query parameter.</p></li>
+
+<li><p>Are you uploading an attachment? You can embed the attachment content
+as JSON using base64-encoding <em>or</em> use a multipart message to separate
+the attachment from its document and avoid the overhead of base64.</p></li>
+</ul>
+
+<p>A good CouchDB library will hide meaningless choices and use a
+reasonable default. For example, the library should use multipart to
+upload attachment content because multipart uses significantly less
+bandwidth than base64 in real-world cases. Application programmers
+shouldn&rsquo;t be bothered about this detail.</p>
+
+<p>There&rsquo;s even more to be said about attachments, and that brings us to
+the second point: <strong>being useful</strong>. But before I explain this, you need
+a basic, two-minute understanding of CouchDB attachments.</p>
+
+<p>A CouchDB attachment is a MIME-typed blob added to a document—think
+<q>email attachment.</q> But, unlike an email, a CouchDB document is
+revision-controlled, hence each attachment has a history. Imagine the
+following sequence of events:</p>
+
+<ol>
+<li><p>You create a document with an attachment containing the content
+<q>Hello</q> at document revision 1.</p></li>
+
+<li><p>You update the attachment with the content <q>Goodbye</q> at document
+revision 2.</p></li>
+</ol>
+
+<p>After updating the attachment, you can retrieve the original
+<q>Hello</q> content by explicitly requesting revision 1.</p>
+
+<p>But what happens to an attachment when you update the document itself?
+That depends on how much info you send in your update:</p>
+
+<ol>
+<li><p>If you send the full attachment, including content, then the server
+will overwrite the existing attachment with the new content.</p></li>
+
+<li><p>Or, if you send an attachment <q>stub</q> containing only the
+attachment&rsquo;s name, then the server will make no changes to the
+existing attachment.</p></li>
+
+<li><p>Or, if you send no attachment info at all, the server will delete the
+existing attachment.</p></li>
+</ol>
+
+<p>If the library requires the application to explicitly provide attachment
+info—as the couchdb crate does—then deletion is the default. But
+deletion is a bad default. A better default would be to send a stub and
+make no changes.</p>
+
+<p>However, a CouchDB library that does automatic stub-sending would take
+more control over the outgoing HTTP request. Such a library would also
+need to know about all attachments without the application telling the
+library about them. Is this even possible? Yes.</p>
+
+<p>Imagine the following pseudocode:</p>
+
+<pre><code class="language-rust">struct Meta {
+    id: DocumentId,
+    revision: Revision,
+    attachments: HashMap&lt;String, Attachment&gt;,
+}
+
+struct Speech {
+    transcript: String,
+}
+
+let doc1 = db.read_document(&quot;gettysburg&quot;);
+
+let (meta, mut content): (Meta, Speech) = doc1.into_content();
+
+if content.transcript == &quot;Four score and *eight* years ago…&quot; {
+
+    // Oops! Need to correct Lincoln's speech.
+    content.transcript = &quot;Four score and *seven* years ago…&quot;.to_owned();
+
+    let doc2 = Document::from_content(meta, content);
+    db.write_document(doc2); // sends a stub for any existing attachment
+}
+</code></pre>
+
+<p>A key fact is that the CouchDB server sends attachment info as part of
+any document. Hence, in the code above, the <code>doc1</code> variable holds
+all attachment info, and it transfers the info to <code>meta</code>, with <code>meta</code>
+later transferring the info to <code>doc2</code>. When the application sends <code>doc2</code>
+to the server, the library knows enough to send a stub for any existing
+attachment.</p>
+
+<p>Suppose instead the application adds (or modifies) an attachment:</p>
+
+<pre><code class="language-rust">let doc3 = db.read_document(&quot;washington_farewell&quot;);
+
+let (mut meta, content): (Meta, Speech) = doc3.into_content();
+meta.attachments.insert(&quot;manuscript.png&quot;,
+                        Attachment::new(&quot;image/png&quot;, load_image()));
+let doc4 = Document::from_content(meta, content);
+
+db.write_document(doc4); // sends a stub for any preexisting attachment
+</code></pre>
+
+<p>In this case, the <code>doc4</code> variable has enough info to send the full
+content of the new <code>manuscript.png</code> attachment and a stub for any other,
+preexisting attachment. Waste not, want not.</p>
+
+<p>I&rsquo;ve been exploring this and other ideas in my new project,
+<a href="https://github.com/cmbrandenburg/chill-rs">Chill</a>.</p>
+
+<p>Chill hides more HTTP headers, URI query parameters, and JSON content of
+the HTTP messages. With Chill, the application declares <em>what</em> to do and
+Chill figures out <em>how</em> to do it.</p>
+
+<hr>
+
+<p>My thanks go to Jeremy Wright for editing early drafts of this article
+and making it better.</p>
+
+
+  <hr>
+  <p>Got feedback? Email me at <a
+   href="emailto:c.m.brandenburg@gmail.com">c.m.brandenburg@gmail.com</a>.</p>
+ </body>
+</html>

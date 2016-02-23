@@ -6,8 +6,171 @@
     <description>Recent content in Posts on Const Volatile</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 24 Dec 2015 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 23 Feb 2016 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://cmbrandenburg.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Rethinking CouchDB in Rust</title>
+      <link>https://cmbrandenburg.github.io/post/2016-02-23-rethinking_couchdb_in_rust/</link>
+      <pubDate>Tue, 23 Feb 2016 00:00:00 +0000</pubDate>
+      
+      <guid>https://cmbrandenburg.github.io/post/2016-02-23-rethinking_couchdb_in_rust/</guid>
+      <description>&lt;p&gt;My knowledge of Rust has surpassed my knowledge of CouchDB. I now think
+less about &lt;em&gt;how&lt;/em&gt; to abstract the CouchDB API and more about &lt;em&gt;what&lt;/em&gt; to
+abstract. Additionally, I believe my original strategy for the &lt;a href=&#34;https://github.com/couchdb-rs/couchdb&#34;&gt;couchdb
+crate&lt;/a&gt; is a bad idea.&lt;/p&gt;
+
+&lt;p&gt;That strategy is to provide a thin abstraction whereby the application
+has fine-grained control over each HTTP request it sends to the CouchDB
+server. Here&amp;rsquo;s an example request with one query parameter:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-rust&#34;&gt;// GET /stuff/my_doc?rev=&amp;lt;some_revision&amp;gt;
+client.get_document(&amp;quot;/stuff/my_doc&amp;quot;)
+      .rev(&amp;amp;some_revision)
+      .run();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There&amp;rsquo;s not much abstraction here. The application explicitly sets the
+URI path and &lt;code&gt;rev&lt;/code&gt; query parameter. This level of abstraction leads to
+two problems:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;The CouchDB API provides many ways of doing the same thing, so the
+library would also provide many ways of doing the same thing—i.e.,
+bloat.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;The library is less useful to most applications.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Let&amp;rsquo;s look at the first problem: &lt;strong&gt;bloat&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;Here are some examples how CouchDB has two ways of doing the same thing:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Are you creating a document? You can PUT the document &lt;em&gt;or&lt;/em&gt; POST it to
+the database.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Are you deleting a document? You can specify its revision via the
+&lt;code&gt;If-Match&lt;/code&gt; header &lt;em&gt;or&lt;/em&gt; the &lt;code&gt;rev&lt;/code&gt; query parameter.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Are you uploading an attachment? You can embed the attachment content
+as JSON using base64-encoding &lt;em&gt;or&lt;/em&gt; use a multipart message to separate
+the attachment from its document and avoid the overhead of base64.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;A good CouchDB library will hide meaningless choices and use a
+reasonable default. For example, the library should use multipart to
+upload attachment content because multipart uses significantly less
+bandwidth than base64 in real-world cases. Application programmers
+shouldn&amp;rsquo;t be bothered about this detail.&lt;/p&gt;
+
+&lt;p&gt;There&amp;rsquo;s even more to be said about attachments, and that brings us to
+the second point: &lt;strong&gt;being useful&lt;/strong&gt;. But before I explain this, you need
+a basic, two-minute understanding of CouchDB attachments.&lt;/p&gt;
+
+&lt;p&gt;A CouchDB attachment is a MIME-typed blob added to a document—think
+&lt;q&gt;email attachment.&lt;/q&gt; But, unlike an email, a CouchDB document is
+revision-controlled, hence each attachment has a history. Imagine the
+following sequence of events:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;You create a document with an attachment containing the content
+&lt;q&gt;Hello&lt;/q&gt; at document revision 1.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;You update the attachment with the content &lt;q&gt;Goodbye&lt;/q&gt; at document
+revision 2.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;After updating the attachment, you can retrieve the original
+&lt;q&gt;Hello&lt;/q&gt; content by explicitly requesting revision 1.&lt;/p&gt;
+
+&lt;p&gt;But what happens to an attachment when you update the document itself?
+That depends on how much info you send in your update:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;If you send the full attachment, including content, then the server
+will overwrite the existing attachment with the new content.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Or, if you send an attachment &lt;q&gt;stub&lt;/q&gt; containing only the
+attachment&amp;rsquo;s name, then the server will make no changes to the
+existing attachment.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Or, if you send no attachment info at all, the server will delete the
+existing attachment.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;If the library requires the application to explicitly provide attachment
+info—as the couchdb crate does—then deletion is the default. But
+deletion is a bad default. A better default would be to send a stub and
+make no changes.&lt;/p&gt;
+
+&lt;p&gt;However, a CouchDB library that does automatic stub-sending would take
+more control over the outgoing HTTP request. Such a library would also
+need to know about all attachments without the application telling the
+library about them. Is this even possible? Yes.&lt;/p&gt;
+
+&lt;p&gt;Imagine the following pseudocode:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-rust&#34;&gt;struct Meta {
+    id: DocumentId,
+    revision: Revision,
+    attachments: HashMap&amp;lt;String, Attachment&amp;gt;,
+}
+
+struct Speech {
+    transcript: String,
+}
+
+let doc1 = db.read_document(&amp;quot;gettysburg&amp;quot;);
+
+let (meta, mut content): (Meta, Speech) = doc1.into_content();
+
+if content.transcript == &amp;quot;Four score and *eight* years ago…&amp;quot; {
+
+    // Oops! Need to correct Lincoln&#39;s speech.
+    content.transcript = &amp;quot;Four score and *seven* years ago…&amp;quot;.to_owned();
+
+    let doc2 = Document::from_content(meta, content);
+    db.write_document(doc2); // sends a stub for any existing attachment
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;A key fact is that the CouchDB server sends attachment info as part of
+any document. Hence, in the code above, the &lt;code&gt;doc1&lt;/code&gt; variable holds
+all attachment info, and it transfers the info to &lt;code&gt;meta&lt;/code&gt;, with &lt;code&gt;meta&lt;/code&gt;
+later transferring the info to &lt;code&gt;doc2&lt;/code&gt;. When the application sends &lt;code&gt;doc2&lt;/code&gt;
+to the server, the library knows enough to send a stub for any existing
+attachment.&lt;/p&gt;
+
+&lt;p&gt;Suppose instead the application adds (or modifies) an attachment:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-rust&#34;&gt;let doc3 = db.read_document(&amp;quot;washington_farewell&amp;quot;);
+
+let (mut meta, content): (Meta, Speech) = doc3.into_content();
+meta.attachments.insert(&amp;quot;manuscript.png&amp;quot;,
+                        Attachment::new(&amp;quot;image/png&amp;quot;, load_image()));
+let doc4 = Document::from_content(meta, content);
+
+db.write_document(doc4); // sends a stub for any preexisting attachment
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In this case, the &lt;code&gt;doc4&lt;/code&gt; variable has enough info to send the full
+content of the new &lt;code&gt;manuscript.png&lt;/code&gt; attachment and a stub for any other,
+preexisting attachment. Waste not, want not.&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;ve been exploring this and other ideas in my new project,
+&lt;a href=&#34;https://github.com/cmbrandenburg/chill-rs&#34;&gt;Chill&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Chill hides more HTTP headers, URI query parameters, and JSON content of
+the HTTP messages. With Chill, the application declares &lt;em&gt;what&lt;/em&gt; to do and
+Chill figures out &lt;em&gt;how&lt;/em&gt; to do it.&lt;/p&gt;
+
+&lt;hr&gt;
+
+&lt;p&gt;My thanks go to Jeremy Wright for editing early drafts of this article
+and making it better.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Hibernating in Debian using a temporary swap file</title>

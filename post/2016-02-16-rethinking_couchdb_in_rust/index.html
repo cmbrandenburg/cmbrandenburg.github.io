@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>Rethinking CouchDB in Rust</title>
+  <link rel="stylesheet" type="text/css" href="https://cmbrandenburg.github.io/css/simplicitism.css" />
+ </head>
+ <body>
+  <h1 class="simplicitism-title">Rethinking CouchDB in Rust</h1>
+
+  <em>Tuesday, Feb 16, 2016</em>
+
+  <p>My knowledge of Rust has now surpassed my knowledge of CouchDB. This
+means I think less about <em>how</em> to abstract the CouchDB API and more
+about <em>what</em> to abstract. It also means I&rsquo;ve changed my mind and now
+think my original strategy for my <a href="https://github.com/couchdb-rs/couchdb">couchdb crate</a> is a
+bad idea.</p>
+
+<p>That strategy is to provide a thin abstraction by having <q>actions</q>
+that map one-to-one with HTTP requests that the client sends to the
+CouchDB server. Here&rsquo;s an example showing a request with one query
+parameter:</p>
+
+<pre><code class="language-rust">// GET /stuff/my_doc?rev=&lt;some_revision&gt;
+client.get_document(&quot;/stuff/my_doc&quot;)
+      .rev(&amp;some_revision)
+      .run();
+</code></pre>
+
+<p>There&rsquo;s not much abstraction going on here. The application tightly
+controls the outgoing HTTP request, and this leads to two problems:</p>
+
+<ol>
+<li><p>The CouchDB API provides many ways of doing the same thing, so any
+one-to-one mapping will also provide many ways of doing the same
+thing—i.e., bloat.</p></li>
+
+<li><p>A low-level abstraction is less useful to most applications.</p></li>
+</ol>
+
+<p>Let&rsquo;s look at the first problem: <strong>bloat</strong>.</p>
+
+<p>Here are some examples of how CouchDB has two ways of doing the same
+thing:</p>
+
+<ul>
+<li><p>Are you creating a document? You can PUT the document <em>or</em> POST it to
+the database.</p></li>
+
+<li><p>Are you deleting a document? You can specify its revision via the
+<code>If-Match</code> header <em>or</em> the <code>rev</code> query parameter.</p></li>
+
+<li><p>Are you uploading an attachment? You can embed the attachment content
+as JSON using base64-encoding <em>or</em> use a multipart message to separate
+the attachment from its document and avoid the overhead of base64.</p></li>
+</ul>
+
+<p>A good CouchDB library will hide meaningless choices and use a
+reasonable default. For example, the library should use multipart to
+upload attachment content because multipart uses significantly less
+bandwidth than base64 in real-world cases. Applications programmers
+shouldn&rsquo;t be bothered about this detail.</p>
+
+<p>There&rsquo;s even more to be said about attachments, and that brings us to
+the second point: <strong>being useful</strong>. But before I explain this, you need
+a basic, two-minute understanding of CouchDB attachments. Here goes.</p>
+
+<p>A CouchDB attachment is a MIME-typed blob added to a document—think of
+an email attachment. But unlike an email, a CouchDB document is
+revision-controlled, and this means each attachment has a history.
+Imagine the following sequence of events:</p>
+
+<ol>
+<li><p>You create a document with an attachment containing the content
+<q>Hello</q> at document revision 1.</p></li>
+
+<li><p>You update the attachment with the content <q>Goodbye</q> at document
+revision 2.</p></li>
+</ol>
+
+<p>After updating the attachment you can retrieve the original <q>Hello</q>
+content by explicitly requesting revision 1.</p>
+
+<p>But what happens to an attachment when you update the document itself?
+One of three things will happen, depending on how much attachment
+info you send in your update:</p>
+
+<ol>
+<li><p>If you send the full attachment, including content, then the server
+will overwrite the existing attachment with the new content.</p></li>
+
+<li><p>If you send an attachment <q>stub</q> containing only the
+attachment&rsquo;s name then the server will make no changes to the
+existing attachment.</p></li>
+
+<li><p>If you send no attachment info then the server will delete the
+existing attachment.</p></li>
+</ol>
+
+<p>If you choose not to decide, you still have made a choice—presumably
+option 3: to send no info and thus delete the attachment. But deletion
+isn&rsquo;t a reasonable default. The reasonable default is option 2: to send
+a stub and thus make no changes.</p>
+
+<p>However, a CouchDB library that makes option 2 the default must take
+more control over the outgoing HTTP request—i.e., the library must
+provide a higher level of abstraction. It also means the library must
+know enough about the document being updated to send stubs for all
+attachments without the application telling the library to do so. Is
+this possible? Yes. Imagine the following sequence of events:</p>
+
+<ol>
+<li><p>The application retrieves a document—say, either explicitly or by
+running a view.</p></li>
+
+<li><p>The application changes its in-memory representation of the
+document—say, by adding a new JSON field.</p></li>
+
+<li><p>The application sends the updated document to the server.</p></li>
+</ol>
+
+<p>The CouchDB library receives attachment info as part of step 1 and thus
+knows enough to send stubs as part of step 3. The Rust type system is
+especially suitable for expressing the ownership semantics to make this
+work.</p>
+
+<p>Furthermore, if the application were to add or modify an attachment to
+the in-memory document as part of step 2 then the library will send the
+<em>appropriate</em> attachment info for step 3. This would entail sending the
+the new or modified attachment&rsquo;s content and, for all other attachments,
+just stubs. Waste not, want not.</p>
+
+<p>I&rsquo;ve begun exploring this and similar ideas in my new project,
+<a href="https://github.com/cmbrandenburg/chill-rs">Chill</a>.</p>
+
+<p>Chill is a CouchDB library that will provide a higher level of
+abstraction. It will have actions that map closely to individual HTTP
+requests—one-to-one in most cases, if not all—but Chill will abstract
+away more of the HTTP headers, URI query parameters, and JSON content of
+those messages. My aim is for the application to use an action to
+declare <em>what</em> to do, and Chill will figure out <em>how</em> to do it.</p>
+
+
+ </body>
+</html>
