@@ -2,13 +2,14 @@
 date: 2016-02-23
 title: Rethinking CouchDB in Rust
 categories:
-    - software design
+    - article
 tags:
     - chill-rs
     - CouchDB
     - couchdb-rs
     - open source
     - Rust
+    - software design
 ---
 
 My knowledge of Rust has surpassed my knowledge of CouchDB. I now think

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>Announcing Chill v0.1.1</title>
+  <link rel="stylesheet" type="text/css" href="https://cmbrandenburg.github.io/css/simplicitism.css" />
+ </head>
+ <body>
+  <h1>Announcing Chill v0.1.1</h1>
+
+  <em>Monday, Apr 18, 2016</em>
+
+  <p>Chill v0.1.1 is <a href="https://crates.io/crates/chill">now available</a>. Chill is a client-side
+CouchDB library for the Rust programming language.</p>
+
+<p>This release adds support for executing views, meaning an application
+using Chill can now use CouchDB for interesting work&mdash;and not
+merely as a document store.</p>
+
+<p>This release also adds support for manipulating attachments&mdash;though
+only indirectly, as a consequence of actions that read or update
+documents. For example, an application can:</p>
+
+<ol>
+<li>Read a document from the CouchDB server,</li>
+<li>Insert an attachment to the application&rsquo;s in-memory representation of
+the document, and,</li>
+<li>Update the document by sending the updated representation to the
+CouchDB server.</li>
+</ol>
+
+<p>Consequently, the CouchDB server will contain the new attachment.</p>
+
+<p>Here&rsquo;s the full <a href="https://github.com/chill-rs/chill/blob/v0.1.1/CHANGELOG.md">change_log</a>.</p>
+
+<p>My aim for future releases is to stick to a three-week release train,
+with each release containing whichever changes happen to make it in to
+the master branch during that time. I believe this schedule will work
+well until Chill provides broad coverage of the CouchDB API.</p>
+
+
+  <hr>
+  <p>Got feedback? Email me at <a
+   href="emailto:c.m.brandenburg@gmail.com">c.m.brandenburg@gmail.com</a>.</p>
+ </body>
+</html>

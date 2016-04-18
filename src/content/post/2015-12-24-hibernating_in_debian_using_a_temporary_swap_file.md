@@ -2,7 +2,7 @@
 date: 2015-12-24
 title: Hibernating in Debian using a temporary swap file
 categories:
-    - How-to
+    - how-to
 tags:
     - power management
     - Linux

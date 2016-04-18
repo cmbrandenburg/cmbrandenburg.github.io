@@ -6,8 +6,44 @@
     <description>Recent content in Posts on Const Volatile</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 23 Feb 2016 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 18 Apr 2016 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://cmbrandenburg.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Announcing Chill v0.1.1</title>
+      <link>https://cmbrandenburg.github.io/post/2016-04-18-chill_v0.1.1/</link>
+      <pubDate>Mon, 18 Apr 2016 00:00:00 +0000</pubDate>
+      
+      <guid>https://cmbrandenburg.github.io/post/2016-04-18-chill_v0.1.1/</guid>
+      <description>&lt;p&gt;Chill v0.1.1 is &lt;a href=&#34;https://crates.io/crates/chill&#34;&gt;now available&lt;/a&gt;. Chill is a client-side
+CouchDB library for the Rust programming language.&lt;/p&gt;
+
+&lt;p&gt;This release adds support for executing views, meaning an application
+using Chill can now use CouchDB for interesting work&amp;mdash;and not
+merely as a document store.&lt;/p&gt;
+
+&lt;p&gt;This release also adds support for manipulating attachments&amp;mdash;though
+only indirectly, as a consequence of actions that read or update
+documents. For example, an application can:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Read a document from the CouchDB server,&lt;/li&gt;
+&lt;li&gt;Insert an attachment to the application&amp;rsquo;s in-memory representation of
+the document, and,&lt;/li&gt;
+&lt;li&gt;Update the document by sending the updated representation to the
+CouchDB server.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Consequently, the CouchDB server will contain the new attachment.&lt;/p&gt;
+
+&lt;p&gt;Here&amp;rsquo;s the full &lt;a href=&#34;https://github.com/chill-rs/chill/blob/v0.1.1/CHANGELOG.md&#34;&gt;change_log&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;My aim for future releases is to stick to a three-week release train,
+with each release containing whichever changes happen to make it in to
+the master branch during that time. I believe this schedule will work
+well until Chill provides broad coverage of the CouchDB API.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Rethinking CouchDB in Rust</title>
