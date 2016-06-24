@@ -6,8 +6,71 @@
     <description>Recent content on Const Volatile</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 18 Apr 2016 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 23 Jun 2016 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://cmbrandenburg.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>SSH jump hosts</title>
+      <link>https://cmbrandenburg.github.io/post/2016-06-23-ssh_jump_hosts/</link>
+      <pubDate>Thu, 23 Jun 2016 00:00:00 +0000</pubDate>
+      
+      <guid>https://cmbrandenburg.github.io/post/2016-06-23-ssh_jump_hosts/</guid>
+      <description>&lt;p&gt;Recently I learned about SSH jump hosts. Jump hosts make it easier to
+connect to an SSH server via an intermediate hop—i.e., connecting to an
+SSH server and, from there, connecting to yet another SSH server.&lt;/p&gt;
+
+&lt;p&gt;For years I did this “jumping” manually, by entering and running two
+distinct SSH commands. E.g.,&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;craig@myclient$ ssh proxy_host
+
+Welcome to proxy_host!
+
+craig@proxy_host$ ssh target_host
+
+Welcome to target_host!
+
+craig@target_host$ echo &amp;quot;Now I can do some work.&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is cumbersome, even when using a private–public key pair to
+eliminate passwords. This is where jump hosts help.&lt;/p&gt;
+
+&lt;p&gt;A jump host allows me to run one &lt;code&gt;ssh&lt;/code&gt; command with the same effect &lt;strong&gt;as
+if&lt;/strong&gt; I had run the two &lt;code&gt;ssh&lt;/code&gt; commands above:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;craig@myclient$ ssh target_host
+
+Welcome to target_host!
+
+craig@target_host$ echo &amp;quot;Now I can do some work.&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;SSH sets up the proxy connection behind the scenes. But you need to
+configure the jump host in your client&amp;rsquo;s &lt;code&gt;.ssh/config&lt;/code&gt; file. Here&amp;rsquo;s
+mine:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Host target_host
+ProxyCommand ssh -q proxy_host nc %h %p
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;When I run the command &lt;code&gt;ssh target_host&lt;/code&gt;, what SSH does is to connect
+to &lt;code&gt;proxy_host&lt;/code&gt; and then to use &lt;code&gt;nc&lt;/code&gt; to forward the connection to
+&lt;code&gt;target_host&lt;/code&gt;. SSH expands the &lt;code&gt;%h&lt;/code&gt; and &lt;code&gt;%p&lt;/code&gt; fields to be the target
+host and port—in this case, &lt;code&gt;target_host&lt;/code&gt; and &lt;code&gt;22&lt;/code&gt;. This expansion
+allows you to configure multiple targets in your &lt;code&gt;.ssh/config&lt;/code&gt; via
+wildcards.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Host *.example.com
+ProxyCommand ssh -q proxy_host nc %h %p
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This stanza will work for using &lt;code&gt;proxy_host&lt;/code&gt; as a jump host for
+connecting to, say, &lt;code&gt;foo.example.com&lt;/code&gt; and &lt;code&gt;bar.example.com&lt;/code&gt;. Wildcards
+are helpful if you&amp;rsquo;re jumping into a large private network with a lot of
+boxes all within one domain.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Announcing Chill v0.1.1</title>

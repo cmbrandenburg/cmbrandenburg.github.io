@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>SSH jump hosts</title>
+  <link rel="stylesheet" type="text/css" href="https://cmbrandenburg.github.io/css/simplicitism.css" />
+ </head>
+ <body>
+  <h1>SSH jump hosts</h1>
+
+  <em>Thursday, Jun 23, 2016</em>
+
+  <p>Recently I learned about SSH jump hosts. Jump hosts make it easier to
+connect to an SSH server via an intermediate hop—i.e., connecting to an
+SSH server and, from there, connecting to yet another SSH server.</p>
+
+<p>For years I did this “jumping” manually, by entering and running two
+distinct SSH commands. E.g.,</p>
+
+<pre><code class="language-sh">craig@myclient$ ssh proxy_host
+
+Welcome to proxy_host!
+
+craig@proxy_host$ ssh target_host
+
+Welcome to target_host!
+
+craig@target_host$ echo &quot;Now I can do some work.&quot;
+</code></pre>
+
+<p>This is cumbersome, even when using a private–public key pair to
+eliminate passwords. This is where jump hosts help.</p>
+
+<p>A jump host allows me to run one <code>ssh</code> command with the same effect <strong>as
+if</strong> I had run the two <code>ssh</code> commands above:</p>
+
+<pre><code>craig@myclient$ ssh target_host
+
+Welcome to target_host!
+
+craig@target_host$ echo &quot;Now I can do some work.&quot;
+</code></pre>
+
+<p>SSH sets up the proxy connection behind the scenes. But you need to
+configure the jump host in your client&rsquo;s <code>.ssh/config</code> file. Here&rsquo;s
+mine:</p>
+
+<pre><code>Host target_host
+ProxyCommand ssh -q proxy_host nc %h %p
+</code></pre>
+
+<p>When I run the command <code>ssh target_host</code>, what SSH does is to connect
+to <code>proxy_host</code> and then to use <code>nc</code> to forward the connection to
+<code>target_host</code>. SSH expands the <code>%h</code> and <code>%p</code> fields to be the target
+host and port—in this case, <code>target_host</code> and <code>22</code>. This expansion
+allows you to configure multiple targets in your <code>.ssh/config</code> via
+wildcards.</p>
+
+<pre><code>Host *.example.com
+ProxyCommand ssh -q proxy_host nc %h %p
+</code></pre>
+
+<p>This stanza will work for using <code>proxy_host</code> as a jump host for
+connecting to, say, <code>foo.example.com</code> and <code>bar.example.com</code>. Wildcards
+are helpful if you&rsquo;re jumping into a large private network with a lot of
+boxes all within one domain.</p>
+
+
+  <hr>
+  <p>Got feedback? Email me at <a
+   href="emailto:c.m.brandenburg@gmail.com">c.m.brandenburg@gmail.com</a>.</p>
+ </body>
+</html>

@@ -3,8 +3,13 @@
   
   <url>
     <loc>https://cmbrandenburg.github.io/</loc>
-    <lastmod>2016-04-18T00:00:00+00:00</lastmod>
+    <lastmod>2016-06-23T00:00:00+00:00</lastmod>
     <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://cmbrandenburg.github.io/post/2016-06-23-ssh_jump_hosts/</loc>
+    <lastmod>2016-06-23T00:00:00+00:00</lastmod>
   </url>
   
   <url>
