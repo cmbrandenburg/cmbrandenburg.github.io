@@ -175,5 +175,5 @@ However, here are some further considerations.
 
 ## References
 
-* https://github.com/cmbrandenburg/pcconf#hibernation. These are the
-  notes I use to set up a desktop system.
+1. [Computer setup notes](https://github.com/cmbrandenburg/computer-setup/blob/7fac2b15d98d3c69bb35b155e05336d700f844da/README.md#hibernation):
+  These are the notes I use to set up a desktop system.
