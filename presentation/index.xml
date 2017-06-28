@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Presentations on Const Volatile</title>
+    <link>https://cmbrandenburg.github.io/presentation/</link>
+    <description>Recent content in Presentations on Const Volatile</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 28 Jun 2017 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://cmbrandenburg.github.io/presentation/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>BoltDB vs LMDB (lightning talk slides for Golang Phoenix)</title>
+      <link>https://cmbrandenburg.github.io/presentation/2017-06-28-boltdb_vs_lmdb_lightning_talk/</link>
+      <pubDate>Wed, 28 Jun 2017 00:00:00 +0000</pubDate>
+      
+      <guid>https://cmbrandenburg.github.io/presentation/2017-06-28-boltdb_vs_lmdb_lightning_talk/</guid>
+      <description>Title  @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz); @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic); @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic); body { font-family: &#39;Droid Serif&#39;; } h1, h2, h3 { font-family: &#39;Yanone Kaffeesatz&#39;; font-weight: normal; } .remark-code, .remark-inline-code { font-family: &#39;Ubuntu Mono&#39;; }    class: center, middle # BoltDB vs LMDB Craig M. Brandenburg c.m.brandenburg@gmail.com --- # BoltDB and LMDB similarities * Both are **local key-value stores**—i.e., server-free, schema-free, non-relational, and typically *fast*. * Both are **memory-mapped**—i.e., small databases reside in memory but databases can be bigger than the sum of physical memory and swap space.</description>
+    </item>
+    
+  </channel>
+</rss>

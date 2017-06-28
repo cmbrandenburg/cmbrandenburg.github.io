@@ -17,9 +17,9 @@ destroyed just after resuming. This trick allows hibernation on a
 swap-free or swap-lite system—useful on a desktop system running with
 enough RAM to make swap space otherwise unnecessary.</p>
 
-<h2 id="how-to-make-it-work:b629a1729d7f2b6331bf76a5082b2687">How to make it work</h2>
+<h2 id="how-to-make-it-work">How to make it work</h2>
 
-<h3 id="determine-the-root-partition-of-your-system:b629a1729d7f2b6331bf76a5082b2687">Determine the root partition of your system</h3>
+<h3 id="determine-the-root-partition-of-your-system">Determine the root partition of your system</h3>
 
 <pre><code>$ rootdev=$(mount | grep ' / ' | awk '{ print $1 }')
 </code></pre>
@@ -34,7 +34,7 @@ fail to suspend or—much worse—fail to resume.</p>
 <p>The second line (e.g., <code>/dev/sda1</code>) should be your system&rsquo;s root
 partition.</p>
 
-<h3 id="install-and-configure-uswsusp:b629a1729d7f2b6331bf76a5082b2687">Install and configure <code>uswsusp</code></h3>
+<h3 id="install-and-configure-uswsusp">Install and configure <code>uswsusp</code></h3>
 
 <pre><code>$ sudo apt-get install uswsusp &amp;&amp;
   sudo sh -c &quot;cat &lt;&lt;EOF &gt;/etc/uswsusp.conf
@@ -59,7 +59,7 @@ but my only experience doing this is with Arch Linux, and, as far as I
 know, the swap file must exist upon boot-up, thus preventing the swap
 file from being created on demand.</p>
 
-<h3 id="update-grub-to-add-the-resume-kernel-parameter:b629a1729d7f2b6331bf76a5082b2687">Update Grub to add the <code>resume</code> kernel parameter</h3>
+<h3 id="update-grub-to-add-the-resume-kernel-parameter">Update Grub to add the <code>resume</code> kernel parameter</h3>
 
 <pre><code>$ { grep -q '\&lt;GRUB_CMDLINE_LINUX_DEFAULT=.*resume=' /etc/default/grub &amp;&amp;
       (echo 'Warning: The `resume` parameter is already set.' &gt;&amp;2 || true) } ||
@@ -76,7 +76,7 @@ boot normally—as though rebooting.</p>
 <p>If the <code>resume</code> parameter is already set, you&rsquo;ll need to take
 intelligent action to resolve.</p>
 
-<h3 id="install-the-dynamic-hibernate-script:b629a1729d7f2b6331bf76a5082b2687">Install the <code>dynamic-hibernate</code> script</h3>
+<h3 id="install-the-dynamic-hibernate-script">Install the <code>dynamic-hibernate</code> script</h3>
 
 <pre><code>$ sudo wget -O /usr/local/sbin/dynamic-hibernate \
     https://raw.githubusercontent.com/cmbrandenburg/pcconf/e7dbe6128a9267b1f55fed27b22fcbfdc1734b3e/bin/dynamic-hibernate &amp;&amp;
@@ -102,7 +102,7 @@ spinning disk, and SSDs are fast enough to make any difference
 negligible. Nevertheless, if you want to change this behavior then
 modify the <code>image size</code> value in the script.</p>
 
-<h3 id="give-yourself-sudo-permission-to-hibernate-optional:b629a1729d7f2b6331bf76a5082b2687">Give yourself <code>sudo</code> permission to hibernate (optional)</h3>
+<h3 id="give-yourself-sudo-permission-to-hibernate-optional">Give yourself <code>sudo</code> permission to hibernate (optional)</h3>
 
 <pre><code>$ sudo sed --in-place \
   -e &quot;\$a$USER ALL = NOPASSWD: /usr/local/sbin/dynamic-hibernate&quot; \
@@ -112,7 +112,7 @@ modify the <code>image size</code> value in the script.</p>
 <p>This gives permission to your current user account to run the
 <code>dynamic-hibernate</code> script without entering a password.</p>
 
-<h3 id="create-a-script-to-lock-the-screen-and-hibernate-optional:b629a1729d7f2b6331bf76a5082b2687">Create a script to lock the screen and hibernate (optional)</h3>
+<h3 id="create-a-script-to-lock-the-screen-and-hibernate-optional">Create a script to lock the screen and hibernate (optional)</h3>
 
 <pre><code>$ mkdir -p ~/bin &amp;&amp;
   touch ~/bin/hibernate &amp;&amp;
@@ -132,7 +132,7 @@ hibernation will gain access to your system.</p>
 you&rsquo;re using a different screensaver then you must change the
 <code>~/bin/hibernate</code> script appropriately.</p>
 
-<h3 id="verify-everything-works:b629a1729d7f2b6331bf76a5082b2687">Verify everything works</h3>
+<h3 id="verify-everything-works">Verify everything works</h3>
 
 <pre><code>$ ~/bin/hibernate
 </code></pre>
@@ -146,7 +146,7 @@ you&rsquo;re using a different screensaver then you must change the
 Power the system back on, and the system should restore its state as it
 was before suspending.</p>
 
-<h2 id="additional-considerations:b629a1729d7f2b6331bf76a5082b2687">Additional considerations</h2>
+<h2 id="additional-considerations">Additional considerations</h2>
 
 <p>Once you get hibernation working, it should continue to work reliably.
 However, here are some further considerations.</p>
@@ -168,7 +168,7 @@ consequences as though it crashed. This includes loss of application
 state, file corruption, etc.</p></li>
 </ul>
 
-<h2 id="references:b629a1729d7f2b6331bf76a5082b2687">References</h2>
+<h2 id="references">References</h2>
 
 <ol>
 <li><a href="https://github.com/cmbrandenburg/computer-setup/blob/7fac2b15d98d3c69bb35b155e05336d700f844da/README.md#hibernation">Computer setup notes</a>:
