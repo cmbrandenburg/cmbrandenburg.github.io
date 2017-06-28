@@ -8,10 +8,10 @@ Craig M. Brandenburg<br>
 
 <h2>Posts</h2>
 
-<ul>
+<ol reversed>
  {{ range .Data.Pages }}
  <li><a href="{{ .Permalink }}">{{ .Title }}</a> ({{ .Date.Format "2006-01-02" }})</li>
  {{ end }}
-</ul>
+</ol>
 
 {{ partial "footer.html" . }}
